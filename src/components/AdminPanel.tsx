@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -14,13 +15,11 @@ import { Button } from "@/components/ui/button";
 import { 
   Calendar, 
   Clock, 
-  User, 
-  Car, 
   Star, 
   MessageSquare, 
   CheckCircle2, 
   XCircle, 
-  MoreHorizontal, 
+  MoreHorizontal,
   ChevronDown,
   Filter,
   Loader2,
@@ -332,10 +331,7 @@ const AdminPanel: React.FC = () => {
                           </div>
                         </TableCell>
                         <TableCell>
-                          <div className="flex items-center gap-2">
-                            <Car className="h-4 w-4 text-muted-foreground" />
-                            {booking.car_make} {booking.car_model}
-                          </div>
+                          {booking.car_make} {booking.car_model}
                         </TableCell>
                         <TableCell>{getStatusBadge(booking.status)}</TableCell>
                         <TableCell className="text-right">
