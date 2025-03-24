@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import AuthForm from '@/components/AuthForm';
@@ -7,9 +7,19 @@ import AdminLogin from '@/components/AdminLogin';
 import PageTransition from '@/components/transitions/PageTransition';
 import { Shield, Calendar, User, Star } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useLocation } from 'react-router-dom';
 
 const Auth: React.FC = () => {
-  const [authMode, setAuthMode] = useState<"user" | "admin">("user");
+  const location = useLocation();
+  const redirectToAdmin = location.state?.redirectToAdmin;
+  const [authMode, setAuthMode] = useState<"user" | "admin">(redirectToAdmin ? "admin" : "user");
+  
+  // Set authMode to admin if we were redirected from the admin page
+  useEffect(() => {
+    if (redirectToAdmin) {
+      setAuthMode("admin");
+    }
+  }, [redirectToAdmin]);
   
   const benefits = [
     {
