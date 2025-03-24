@@ -3,17 +3,19 @@ import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Eye, EyeOff, Lock, Mail } from 'lucide-react';
+import { Eye, EyeOff, Lock, Mail, AlertCircle } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { useAuth } from '@/contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { InputWithIcon } from '@/components/ui/input-with-icon';
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 const AdminLogin: React.FC = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const { toast } = useToast();
   const { signInAsAdmin, isAdmin, user } = useAuth();
   const navigate = useNavigate();
@@ -29,13 +31,10 @@ const AdminLogin: React.FC = () => {
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
     
     if (!email || !password) {
-      toast({
-        title: "Missing information",
-        description: "Please fill in all required fields.",
-        variant: "destructive",
-      });
+      setError("Please fill in all required fields.");
       return;
     }
     
@@ -45,14 +44,16 @@ const AdminLogin: React.FC = () => {
       console.log("Attempting admin login for:", email);
       await signInAsAdmin(email, password);
       console.log("Admin login successful, redirecting to admin page");
-      navigate("/admin");
       
       // Reset form
       setEmail("");
       setPassword("");
-    } catch (error) {
+      
+      // Navigate after successful login
+      navigate("/admin");
+    } catch (error: any) {
       console.error("Admin login error:", error);
-      // Error is already handled in signInAsAdmin function
+      setError(error.message || "Failed to login as admin. Please check your credentials.");
     } finally {
       setIsLoading(false);
     }
@@ -66,9 +67,17 @@ const AdminLogin: React.FC = () => {
           Sign in with the administrator account
         </p>
         <div className="mt-4 p-3 bg-amber-50 border border-amber-200 rounded-md text-sm text-amber-800">
-          <p>This panel is restricted to a single administrator account only.</p>
+          <p>This panel is restricted to accounts with admin privileges only.</p>
         </div>
       </div>
+      
+      {error && (
+        <Alert variant="destructive" className="mb-6">
+          <AlertCircle className="h-4 w-4" />
+          <AlertTitle>Login Error</AlertTitle>
+          <AlertDescription>{error}</AlertDescription>
+        </Alert>
+      )}
       
       <form onSubmit={handleAdminLogin} className="space-y-6">
         <div className="space-y-4">
