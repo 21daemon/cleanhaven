@@ -24,10 +24,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const { toast } = useToast();
 
-  // Check if user is admin
+  // Debug function to manually check admin status
+  const forceCheckAdminStatus = async () => {
+    if (user) {
+      console.log("Force checking admin status for user:", user.id);
+      const adminStatus = await checkIfAdmin(user.id);
+      console.log("Admin status checked, result:", adminStatus);
+      setIsAdmin(adminStatus);
+    }
+  };
+
+  // Check if user is admin - FIXED
   const checkIfAdmin = async (userId: string) => {
     try {
-      // Query the profiles table instead of the users table
+      console.log("Checking admin status for user ID:", userId);
+      
+      // Query the profiles table for the is_admin field
       const { data, error } = await supabase
         .from('profiles')
         .select('is_admin')
@@ -40,13 +52,22 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      // Make sure to explicitly convert to boolean with !!
-      const isUserAdmin = !!data?.is_admin;
-      console.log('Admin status check:', userId, isUserAdmin, data);
+      // Check if data exists and has is_admin property
+      if (!data) {
+        console.error('No profile data found for user:', userId);
+        setIsAdmin(false);
+        return false;
+      }
+
+      // Explicitly convert to boolean to avoid truthy/falsy issues
+      const isUserAdmin = data.is_admin === true;
+      
+      console.log('Admin status check result for', userId, ':', isUserAdmin, 'Raw value:', data.is_admin);
+      
       setIsAdmin(isUserAdmin);
       return isUserAdmin;
     } catch (error) {
-      console.error('Error checking admin status:', error);
+      console.error('Exception checking admin status:', error);
       setIsAdmin(false);
       return false;
     }
@@ -56,6 +77,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     // Set up auth state listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        console.log("Auth state changed:", event, session?.user?.id);
         setSession(session);
         setUser(session?.user ?? null);
         
@@ -71,6 +93,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // THEN check for existing session
     supabase.auth.getSession().then(async ({ data: { session } }) => {
+      console.log("Initial session check:", session?.user?.id);
       setSession(session);
       setUser(session?.user ?? null);
       
@@ -113,6 +136,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const signInAsAdmin = async (email: string, password: string) => {
     try {
       setLoading(true);
+      console.log("Attempting admin login for:", email);
+      
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       
       if (error) {
@@ -125,10 +150,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       }
       
       // Verify that this user is actually an admin
+      console.log("Login successful, checking admin status for user:", data.user.id);
       const isUserAdmin = await checkIfAdmin(data.user.id);
       
       if (!isUserAdmin) {
         // If not admin, sign them out and show error
+        console.error("User is not an admin:", data.user.id);
         await supabase.auth.signOut();
         toast({
           title: "Access denied",
@@ -138,6 +165,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw new Error("Access denied: Not an admin account");
       }
       
+      console.log("Admin login successful for user:", data.user.id);
       toast({
         title: "Admin login successful",
         description: "Welcome to the admin dashboard!",

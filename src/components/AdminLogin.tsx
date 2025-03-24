@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -15,15 +15,17 @@ const AdminLogin: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
-  const { signInAsAdmin, isAdmin } = useAuth();
+  const { signInAsAdmin, isAdmin, user } = useAuth();
   const navigate = useNavigate();
 
   // Redirect if already logged in as admin
-  React.useEffect(() => {
+  useEffect(() => {
+    console.log("AdminLogin - Current auth state:", { isAdmin, userId: user?.id });
     if (isAdmin) {
+      console.log("User is admin, redirecting to admin page");
       navigate("/admin");
     }
-  }, [isAdmin, navigate]);
+  }, [isAdmin, navigate, user]);
 
   const handleAdminLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -40,7 +42,9 @@ const AdminLogin: React.FC = () => {
     setIsLoading(true);
     
     try {
+      console.log("Attempting admin login for:", email);
       await signInAsAdmin(email, password);
+      console.log("Admin login successful, redirecting to admin page");
       navigate("/admin");
       
       // Reset form

@@ -10,16 +10,19 @@ import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 
 const Admin: React.FC = () => {
-  const { isAdmin, loading } = useAuth();
+  const { isAdmin, loading, user } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
+    // Debug info
+    console.log("Admin page - Current auth state:", { isAdmin, loading, userId: user?.id });
+    
     // Redirect non-admin users to auth page after loading is complete
     if (!loading && !isAdmin) {
       console.log("User is not admin, redirecting to auth page");
       navigate('/auth');
     }
-  }, [isAdmin, loading, navigate]);
+  }, [isAdmin, loading, navigate, user]);
 
   return (
     <div className="min-h-screen flex flex-col">
@@ -55,6 +58,7 @@ const Admin: React.FC = () => {
                     <p className="text-sm text-amber-700">
                       This area is restricted to authorized personnel only. All actions are logged for security purposes.
                     </p>
+                    {user && <p className="text-xs text-amber-700 mt-1">Logged in as: {user.email}</p>}
                   </div>
                 </div>
               </div>
@@ -72,7 +76,8 @@ const Admin: React.FC = () => {
                     <ShieldAlert className="h-16 w-16 text-red-500 mx-auto mb-4" />
                     <h2 className="text-2xl font-bold text-red-600 mb-3">Access Denied</h2>
                     <p className="text-muted-foreground mb-6">
-                      You don't have permission to access the admin panel.
+                      You don't have permission to access the admin panel. 
+                      {user && <span className="block mt-2">Current user: {user.email}</span>}
                     </p>
                     <Button onClick={() => navigate('/auth')}>
                       Go to Login
