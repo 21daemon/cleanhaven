@@ -39,7 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         return false;
       }
 
-      const adminStatus = data?.is_admin === true;
+      const adminStatus = !!data?.is_admin;
       console.log('Admin status check result:', adminStatus, 'Raw value:', data?.is_admin);
       
       setIsAdmin(adminStatus);
@@ -129,6 +129,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         throw error;
       }
       
+      if (!data.user) {
+        throw new Error("Failed to retrieve user data");
+      }
+      
       const isUserAdmin = await checkIfAdmin(data.user.id);
       
       if (!isUserAdmin) {
@@ -197,6 +201,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     try {
       setLoading(true);
       await supabase.auth.signOut();
+      setUser(null);
+      setSession(null);
+      setIsAdmin(false);
+      
       toast({
         title: "Logged out",
         description: "You have been successfully logged out.",

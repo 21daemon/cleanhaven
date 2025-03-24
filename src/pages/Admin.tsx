@@ -32,6 +32,9 @@ const Admin: React.FC = () => {
     );
   }
   
+  // Don't render the admin content if not admin
+  if (!isAdmin) return null;
+  
   return (
     <div className="min-h-screen flex flex-col">
       <Navbar />
