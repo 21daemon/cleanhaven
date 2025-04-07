@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from "react";
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -7,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/transitions/PageTransition";
+import DataAnalytics from "@/components/admin/DataAnalytics";
 import {
       Table,
       TableBody,
@@ -16,6 +18,7 @@ import {
       TableHeader,
       TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { AlertCircle, AlertTriangle, Bug, RefreshCw } from "lucide-react";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
@@ -331,146 +334,159 @@ const AdminDashboard: React.FC = () => {
                                     Admin Dashboard
                               </h1>
 
-                              <div className="grid md:grid-cols-2 gap-6">
-                                    <div className="bg-white rounded-lg shadow-md p-6">
-                                          <h2 className="text-xl font-semibold mb-4">
-                                                Bookings
-                                          </h2>
-                                          <Table>
-                                                <TableHeader>
-                                                      <TableRow>
-                                                            <TableHead>
-                                                                  Date
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                  Service
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                  Date
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                  Time
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                  Car
-                                                            </TableHead>
-                                                      </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                      {bookings.length > 0 ? (
-                                                            bookings.map(
-                                                                  (booking) => (
-                                                                        <TableRow
-                                                                              key={
-                                                                                    booking.id
-                                                                              }
-                                                                        >
-                                                                              <TableCell>
-                                                                                    {new Date(
-                                                                                          booking.date
-                                                                                    ).toLocaleDateString()}
-                                                                              </TableCell>
-                                                                              <TableCell>
-                                                                                    {
-                                                                                          booking.service_name
+                              <Tabs defaultValue="analytics" className="w-full mb-6">
+                                    <TabsList className="mb-4">
+                                          <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                                          <TabsTrigger value="data">Raw Data</TabsTrigger>
+                                    </TabsList>
+                                    
+                                    <TabsContent value="analytics">
+                                          <DataAnalytics bookings={bookings} feedback={feedback} />
+                                    </TabsContent>
+                                    
+                                    <TabsContent value="data">
+                                          <div className="grid md:grid-cols-2 gap-6">
+                                                <div className="bg-white rounded-lg shadow-md p-6">
+                                                      <h2 className="text-xl font-semibold mb-4">
+                                                            Bookings
+                                                      </h2>
+                                                      <Table>
+                                                            <TableHeader>
+                                                                  <TableRow>
+                                                                        <TableHead>
+                                                                              Date
+                                                                        </TableHead>
+                                                                        <TableHead>
+                                                                              Service
+                                                                        </TableHead>
+                                                                        <TableHead>
+                                                                              Date
+                                                                        </TableHead>
+                                                                        <TableHead>
+                                                                              Time
+                                                                        </TableHead>
+                                                                        <TableHead>
+                                                                              Car
+                                                                        </TableHead>
+                                                                  </TableRow>
+                                                            </TableHeader>
+                                                            <TableBody>
+                                                                  {bookings.length > 0 ? (
+                                                                        bookings.map(
+                                                                              (booking) => (
+                                                                                    <TableRow
+                                                                                          key={
+                                                                                                booking.id
+                                                                                          }
+                                                                                    >
+                                                                                          <TableCell>
+                                                                                                {new Date(
+                                                                                                      booking.date
+                                                                                                ).toLocaleDateString()}
+                                                                                          </TableCell>
+                                                                                          <TableCell>
+                                                                                                {
+                                                                                                      booking.service_name
+                                                                                                }
+                                                                                          </TableCell>
+                                                                                          <TableCell>
+                                                                                                {booking.date ||
+                                                                                                      "N/A"}
+                                                                                          </TableCell>
+                                                                                          <TableCell>
+                                                                                                {booking.time_slot ||
+                                                                                                      "N/A"}
+                                                                                          </TableCell>
+                                                                                          <TableCell>
+                                                                                                {booking.car_make ||
+                                                                                                      "N/A"}
+                                                                                          </TableCell>
+                                                                                    </TableRow>
+                                                                              )
+                                                                        )
+                                                                  ) : (
+                                                                        <TableRow>
+                                                                              <TableCell
+                                                                                    colSpan={
+                                                                                          5
                                                                                     }
-                                                                              </TableCell>
-                                                                              <TableCell>
-                                                                                    {booking.date ||
-                                                                                          "N/A"}
-                                                                              </TableCell>
-                                                                              <TableCell>
-                                                                                    {booking.time_slot ||
-                                                                                          "N/A"}
-                                                                              </TableCell>
-                                                                              <TableCell>
-                                                                                    {booking.car_make ||
-                                                                                          "N/A"}
+                                                                                    className="text-center py-4"
+                                                                              >
+                                                                                    No
+                                                                                    bookings
+                                                                                    found
                                                                               </TableCell>
                                                                         </TableRow>
-                                                                  )
-                                                            )
-                                                      ) : (
-                                                            <TableRow>
-                                                                  <TableCell
-                                                                        colSpan={
-                                                                              3
-                                                                        }
-                                                                        className="text-center py-4"
-                                                                  >
-                                                                        No
-                                                                        bookings
-                                                                        found
-                                                                  </TableCell>
-                                                            </TableRow>
-                                                      )}
-                                                </TableBody>
-                                          </Table>
-                                    </div>
+                                                                  )}
+                                                            </TableBody>
+                                                      </Table>
+                                                </div>
 
-                                    <div className="bg-white rounded-lg shadow-md p-6">
-                                          <h2 className="text-xl font-semibold mb-4">
-                                                Feedback
-                                          </h2>
-                                          <Table>
-                                                <TableHeader>
-                                                      <TableRow>
-                                                            <TableHead>
-                                                                  Date
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                  Rating
-                                                            </TableHead>
-                                                            <TableHead>
-                                                                  Message
-                                                            </TableHead>
-                                                      </TableRow>
-                                                </TableHeader>
-                                                <TableBody>
-                                                      {feedback.length > 0 ? (
-                                                            feedback.map(
-                                                                  (item) => (
-                                                                        <TableRow
-                                                                              key={
-                                                                                    item.id
-                                                                              }
-                                                                        >
-                                                                              <TableCell>
-                                                                                    {new Date(
-                                                                                          item.created_at
-                                                                                    ).toLocaleDateString()}
-                                                                              </TableCell>
-                                                                              <TableCell>
-                                                                                    {"⭐".repeat(
-                                                                                          item.rating
-                                                                                    )}
-                                                                              </TableCell>
-                                                                              <TableCell className="truncate max-w-[200px]">
-                                                                                    {
-                                                                                          item.message
+                                                <div className="bg-white rounded-lg shadow-md p-6">
+                                                      <h2 className="text-xl font-semibold mb-4">
+                                                            Feedback
+                                                      </h2>
+                                                      <Table>
+                                                            <TableHeader>
+                                                                  <TableRow>
+                                                                        <TableHead>
+                                                                              Date
+                                                                        </TableHead>
+                                                                        <TableHead>
+                                                                              Rating
+                                                                        </TableHead>
+                                                                        <TableHead>
+                                                                              Message
+                                                                        </TableHead>
+                                                                  </TableRow>
+                                                            </TableHeader>
+                                                            <TableBody>
+                                                                  {feedback.length > 0 ? (
+                                                                        feedback.map(
+                                                                              (item) => (
+                                                                                    <TableRow
+                                                                                          key={
+                                                                                                item.id
+                                                                                          }
+                                                                                    >
+                                                                                          <TableCell>
+                                                                                                {new Date(
+                                                                                                      item.created_at
+                                                                                                ).toLocaleDateString()}
+                                                                                          </TableCell>
+                                                                                          <TableCell>
+                                                                                                {"⭐".repeat(
+                                                                                                      item.rating
+                                                                                                )}
+                                                                                          </TableCell>
+                                                                                          <TableCell className="truncate max-w-[200px]">
+                                                                                                {
+                                                                                                      item.message
+                                                                                                }
+                                                                                          </TableCell>
+                                                                                    </TableRow>
+                                                                              )
+                                                                        )
+                                                                  ) : (
+                                                                        <TableRow>
+                                                                              <TableCell
+                                                                                    colSpan={
+                                                                                          3
                                                                                     }
+                                                                                    className="text-center py-4"
+                                                                              >
+                                                                                    No
+                                                                                    feedback
+                                                                                    found
                                                                               </TableCell>
                                                                         </TableRow>
-                                                                  )
-                                                            )
-                                                      ) : (
-                                                            <TableRow>
-                                                                  <TableCell
-                                                                        colSpan={
-                                                                              3
-                                                                        }
-                                                                        className="text-center py-4"
-                                                                  >
-                                                                        No
-                                                                        feedback
-                                                                        found
-                                                                  </TableCell>
-                                                            </TableRow>
-                                                      )}
-                                                </TableBody>
-                                          </Table>
-                                    </div>
-                              </div>
+                                                                  )}
+                                                            </TableBody>
+                                                      </Table>
+                                                </div>
+                                          </div>
+                                    </TabsContent>
+                              </Tabs>
                         </div>
                   </PageTransition>
                   <Footer />
