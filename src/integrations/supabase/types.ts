@@ -16,7 +16,9 @@ export type Database = {
           created_at: string
           date: string
           id: string
+          phone: string | null
           price: string
+          profile_id: string | null
           service_id: string
           service_name: string
           status: string
@@ -30,7 +32,9 @@ export type Database = {
           created_at?: string
           date: string
           id?: string
+          phone?: string | null
           price: string
+          profile_id?: string | null
           service_id: string
           service_name: string
           status?: string
@@ -44,7 +48,9 @@ export type Database = {
           created_at?: string
           date?: string
           id?: string
+          phone?: string | null
           price?: string
+          profile_id?: string | null
           service_id?: string
           service_name?: string
           status?: string
@@ -52,13 +58,22 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "bookings_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       feedback: {
         Row: {
           created_at: string
           id: string
           message: string
+          profile_id: string | null
           rating: number
           satisfaction: string | null
           user_id: string
@@ -67,6 +82,7 @@ export type Database = {
           created_at?: string
           id?: string
           message: string
+          profile_id?: string | null
           rating: number
           satisfaction?: string | null
           user_id: string
@@ -75,11 +91,20 @@ export type Database = {
           created_at?: string
           id?: string
           message?: string
+          profile_id?: string | null
           rating?: number
           satisfaction?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "feedback_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       profiles: {
         Row: {
