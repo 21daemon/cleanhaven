@@ -7,7 +7,7 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-const OPENAI_API_KEY = Deno.env.get('OPENAI_API_KEY');
+const GEMINI_API_KEY = Deno.env.get('GEMINI_API_KEY');
 
 // System prompt to define the chatbot's identity and knowledge
 const SYSTEM_PROMPT = `
@@ -59,10 +59,10 @@ serve(async (req) => {
   try {
     const { message, history = [] } = await req.json();
 
-    if (!OPENAI_API_KEY) {
+    if (!GEMINI_API_KEY) {
       return new Response(
         JSON.stringify({
-          error: "OpenAI API key is not configured. Please set the OPENAI_API_KEY environment variable.",
+          error: "Gemini API key is not configured. Please set the GEMINI_API_KEY environment variable.",
         }),
         {
           status: 500,
@@ -71,37 +71,65 @@ serve(async (req) => {
       );
     }
 
-    // Prepare messages for OpenAI
-    const messages = [
-      { role: "system", content: SYSTEM_PROMPT },
-      ...history,
-      { role: "user", content: message },
-    ];
+    // Prepare conversation for Gemini API
+    const contents = [];
+    
+    // Add system prompt as a "user" message (Gemini doesn't have system role)
+    contents.push({
+      role: "user",
+      parts: [{ text: SYSTEM_PROMPT }]
+    });
+    
+    // Add model response acknowledging the instructions
+    contents.push({
+      role: "model",
+      parts: [{ text: "I understand. I'll act as an expert car detailing assistant for Autox24, following the guidelines provided." }]
+    });
+    
+    // Add conversation history
+    for (const msg of history) {
+      contents.push({
+        role: msg.role === "assistant" ? "model" : "user",
+        parts: [{ text: msg.content }]
+      });
+    }
+    
+    // Add the current user message
+    contents.push({
+      role: "user",
+      parts: [{ text: message }]
+    });
 
-    // Call OpenAI API
-    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    // Call Gemini API
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-pro:generateContent", {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${OPENAI_API_KEY}`,
         "Content-Type": "application/json",
+        "x-goog-api-key": GEMINI_API_KEY,
       },
       body: JSON.stringify({
-        model: "gpt-4o-mini",
-        messages,
-        temperature: 0.7,
-        max_tokens: 500,
+        contents,
+        generationConfig: {
+          temperature: 0.7,
+          maxOutputTokens: 800,
+          topP: 0.95,
+        },
       }),
     });
 
     const data = await response.json();
-
+    
+    // Handle possible error formats from Gemini API
     if (data.error) {
-      throw new Error(data.error.message);
+      throw new Error(data.error.message || "Error from Gemini API");
     }
+    
+    // Extract the response text from Gemini's response format
+    const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm sorry, I couldn't generate a response.";
 
     return new Response(
       JSON.stringify({
-        response: data.choices[0].message.content,
+        response: generatedText,
       }),
       {
         headers: { ...corsHeaders, "Content-Type": "application/json" },

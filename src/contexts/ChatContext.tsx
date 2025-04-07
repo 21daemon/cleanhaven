@@ -54,7 +54,7 @@ export const ChatProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setIsLoading(true);
 
     try {
-      // Call the edge function to get AI response
+      // Call the edge function to get AI response (using Gemini API now)
       const { data, error } = await supabase.functions.invoke("chat-ai", {
         body: { 
           message: content,
