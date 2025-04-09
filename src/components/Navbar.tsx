@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,6 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { supabase } from "@/integrations/supabase/client";
 
 const navItems = [
       { name: "Home", href: "/" },
@@ -33,15 +33,38 @@ const Navbar = () => {
       const [adminVisible, setAdminVisible] = useState(false);
 
       useEffect(() => {
-            // This will help debug the admin status
-            if (user) {
-                  console.log("User is logged in. Admin status:", isAdmin);
-                  setAdminVisible(isAdmin);
-            } else {
-                  console.log("No user is logged in");
-                  setAdminVisible(false);
-            }
-      }, [user, isAdmin]);
+            const checkAdminStatus = async () => {
+                  if (user) {
+                        try {
+                              const { data, error } = await supabase
+                                    .from("profiles")
+                                    .select("is_admin")
+                                    .eq("id", user.id)
+                                    .single();
+
+                              if (error) {
+                                    console.error(
+                                          "Error fetching admin status:",
+                                          error
+                                    );
+                                    setAdminVisible(false);
+                              } else {
+                                    setAdminVisible(data?.is_admin || false);
+                              }
+                        } catch (error) {
+                              console.error(
+                                    "Error checking admin status:",
+                                    error
+                              );
+                              setAdminVisible(false);
+                        }
+                  } else {
+                        setAdminVisible(false);
+                  }
+            };
+
+            checkAdminStatus();
+      }, [user]);
 
       const handleSignOut = async () => {
             try {
@@ -60,15 +83,19 @@ const Navbar = () => {
 
       // Define user navigation items
       const userNavItems = [
-            { name: "My Bookings", href: "/my-bookings", icon: <User className="mr-2 h-4 w-4" /> },
+            {
+                  name: "My Bookings",
+                  href: "/my-bookings",
+                  icon: <User className="mr-2 h-4 w-4" />,
+            },
       ];
 
       // Add admin dashboard link if user is admin
       if (adminVisible) {
-            userNavItems.push({ 
-                  name: "Admin Dashboard", 
-                  href: "/admin", 
-                  icon: <LayoutDashboard className="mr-2 h-4 w-4" /> 
+            userNavItems.push({
+                  name: "Admin Dashboard",
+                  href: "/admin",
+                  icon: <LayoutDashboard className="mr-2 h-4 w-4" />,
             });
       }
 
@@ -76,7 +103,9 @@ const Navbar = () => {
             <div
                   className={cn(
                         "fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60",
-                        pathname === "/" ? "border-b border-transparent" : "border-b"
+                        pathname === "/"
+                              ? "border-b border-transparent"
+                              : "border-b"
                   )}
             >
                   <nav className="flex items-center justify-between mx-auto p-4 max-w-screen-xl">
@@ -106,7 +135,7 @@ const Navbar = () => {
                                                 {item.name}
                                           </Link>
                                     ))}
-                                    
+
                                     {/* Show Admin link in desktop menu if user is admin */}
                                     {adminVisible && (
                                           <Link
@@ -142,7 +171,7 @@ const Navbar = () => {
                                                             <User className="h-4 w-4 text-primary" />
                                                       </div>
                                                       {adminVisible && (
-                                                          <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-primary"></span>
+                                                            <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-primary"></span>
                                                       )}
                                                 </Button>
                                           </DropdownMenuTrigger>
@@ -151,10 +180,15 @@ const Navbar = () => {
                                                 className="w-56"
                                           >
                                                 <DropdownMenuLabel>
-                                                      My Account {adminVisible && <span className="ml-2 text-xs font-normal text-primary">(Admin)</span>}
+                                                      My Account{" "}
+                                                      {adminVisible && (
+                                                            <span className="ml-2 text-xs font-normal text-primary">
+                                                                  (Admin)
+                                                            </span>
+                                                      )}
                                                 </DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
-                                                
+
                                                 {userNavItems.map((item) => (
                                                       <DropdownMenuItem
                                                             key={item.name}
@@ -165,11 +199,15 @@ const Navbar = () => {
                                                                   className="flex items-center"
                                                             >
                                                                   {item.icon}
-                                                                  <span>{item.name}</span>
+                                                                  <span>
+                                                                        {
+                                                                              item.name
+                                                                        }
+                                                                  </span>
                                                             </Link>
                                                       </DropdownMenuItem>
                                                 ))}
-                                                
+
                                                 <DropdownMenuItem
                                                       onClick={handleSignOut}
                                                       className="text-destructive"
@@ -180,7 +218,11 @@ const Navbar = () => {
                                           </DropdownMenuContent>
                                     </DropdownMenu>
                               ) : (
-                                    <Button asChild size="sm" className="hover-lift">
+                                    <Button
+                                          asChild
+                                          size="sm"
+                                          className="hover-lift"
+                                    >
                                           <Link to="/auth">Sign In</Link>
                                     </Button>
                               )}
@@ -188,7 +230,9 @@ const Navbar = () => {
                               <button
                                     type="button"
                                     className="md:hidden inline-flex items-center justify-center rounded-md text-muted-foreground hover:text-foreground"
-                                    onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+                                    onClick={() =>
+                                          setMobileMenuOpen(!mobileMenuOpen)
+                                    }
                               >
                                     <span className="sr-only">
                                           Open main menu
@@ -223,7 +267,7 @@ const Navbar = () => {
                                                 {item.name}
                                           </Link>
                                     ))}
-                                    
+
                                     {/* Show Admin link in mobile menu if user is admin */}
                                     {adminVisible && (
                                           <Link
@@ -234,29 +278,37 @@ const Navbar = () => {
                                                             ? "bg-primary/10 text-primary"
                                                             : "hover:bg-muted"
                                                 )}
-                                                onClick={() => setMobileMenuOpen(false)}
+                                                onClick={() =>
+                                                      setMobileMenuOpen(false)
+                                                }
                                           >
                                                 <LayoutDashboard className="h-4 w-4 mr-2" />
                                                 <span>Admin Dashboard</span>
                                                 <span className="ml-2 h-2 w-2 rounded-full bg-primary"></span>
                                           </Link>
                                     )}
-                                    
+
                                     {user && (
                                           <>
                                                 <Link
                                                       to="/my-bookings"
                                                       className="px-3 py-2 text-base font-medium rounded-md hover:bg-muted flex items-center"
-                                                      onClick={() => setMobileMenuOpen(false)}
+                                                      onClick={() =>
+                                                            setMobileMenuOpen(
+                                                                  false
+                                                            )
+                                                      }
                                                 >
                                                       <User className="h-4 w-4 mr-2" />
                                                       <span>My Bookings</span>
                                                 </Link>
-                                                
+
                                                 <button
                                                       onClick={() => {
                                                             handleSignOut();
-                                                            setMobileMenuOpen(false);
+                                                            setMobileMenuOpen(
+                                                                  false
+                                                            );
                                                       }}
                                                       className="px-3 py-2 text-base font-medium rounded-md text-left hover:bg-muted flex items-center text-destructive"
                                                 >
