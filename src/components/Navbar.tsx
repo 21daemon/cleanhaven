@@ -1,9 +1,10 @@
+
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Menu, X, User, LogOut, Settings } from "lucide-react";
+import { Menu, X, User, LogOut, Settings, LayoutDashboard } from "lucide-react";
 import {
       DropdownMenu,
       DropdownMenuContent,
@@ -27,13 +28,13 @@ const navItems = [
 const Navbar = () => {
       const { pathname } = useLocation();
       const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-      const { user, isAdmin } = useAuth();
+      const { user, isAdmin, signOut } = useAuth();
       const { toast } = useToast();
       const isMobile = useIsMobile();
 
       const handleSignOut = async () => {
             try {
-                  await supabase.auth.signOut();
+                  await signOut();
                   toast({
                         title: "Signed out successfully",
                   });
@@ -47,17 +48,21 @@ const Navbar = () => {
       };
 
       const userNavItems = [
-            { name: "My Bookings", href: "/my-bookings" },
+            { name: "My Bookings", href: "/my-bookings", icon: <User className="mr-2 h-4 w-4" /> },
       ];
 
       if (isAdmin) {
-            userNavItems.push({ name: "Admin", href: "/admin" });
+            userNavItems.push({ 
+                  name: "Admin Dashboard", 
+                  href: "/admin", 
+                  icon: <LayoutDashboard className="mr-2 h-4 w-4" /> 
+            });
       }
 
       return (
             <div
                   className={cn(
-                        "fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60",
+                        "fixed top-0 left-0 right-0 z-50 bg-background/95 backdrop-blur-lg supports-[backdrop-filter]:bg-background/60",
                         pathname === "/" ? "border-b border-transparent" : "border-b"
                   )}
             >
@@ -67,7 +72,7 @@ const Navbar = () => {
                                     to="/"
                                     className="flex-shrink-0 flex items-center mr-8"
                               >
-                                    <span className="text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
+                                    <span className="text-xl md:text-2xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/70">
                                           CarDetailing
                                     </span>
                               </Link>
@@ -79,10 +84,10 @@ const Navbar = () => {
                                                 key={item.name}
                                                 to={item.href}
                                                 className={cn(
-                                                      "text-sm font-medium hover:text-primary transition-colors",
+                                                      "text-sm font-medium transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:rounded-full after:origin-left after:transform after:scale-x-0 hover:after:scale-x-100 after:transition-transform",
                                                       pathname === item.href
-                                                            ? "text-primary"
-                                                            : "text-muted-foreground"
+                                                            ? "text-primary after:bg-primary after:scale-x-100"
+                                                            : "text-muted-foreground hover:text-foreground after:bg-primary/60"
                                                 )}
                                           >
                                                 {item.name}
@@ -99,11 +104,14 @@ const Navbar = () => {
                                           <DropdownMenuTrigger asChild>
                                                 <Button
                                                       variant="ghost"
-                                                      className="relative h-8 w-8 rounded-full"
+                                                      className="relative rounded-full hover:bg-muted"
                                                 >
                                                       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                                                             <User className="h-4 w-4 text-primary" />
                                                       </div>
+                                                      {isAdmin && (
+                                                          <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-primary"></span>
+                                                      )}
                                                 </Button>
                                           </DropdownMenuTrigger>
                                           <DropdownMenuContent
@@ -111,7 +119,7 @@ const Navbar = () => {
                                                 className="w-56"
                                           >
                                                 <DropdownMenuLabel>
-                                                      My Account
+                                                      My Account {isAdmin && <span className="ml-2 text-xs font-normal text-primary">(Admin)</span>}
                                                 </DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
                                                 
@@ -122,12 +130,9 @@ const Navbar = () => {
                                                       >
                                                             <Link
                                                                   to={item.href}
+                                                                  className="flex items-center"
                                                             >
-                                                                  {item.name === "Admin" ? (
-                                                                        <Settings className="mr-2 h-4 w-4" />
-                                                                  ) : (
-                                                                        <User className="mr-2 h-4 w-4" />
-                                                                  )}
+                                                                  {item.icon}
                                                                   <span>{item.name}</span>
                                                             </Link>
                                                       </DropdownMenuItem>
@@ -135,6 +140,7 @@ const Navbar = () => {
                                                 
                                                 <DropdownMenuItem
                                                       onClick={handleSignOut}
+                                                      className="text-destructive"
                                                 >
                                                       <LogOut className="mr-2 h-4 w-4" />
                                                       <span>Log out</span>
@@ -142,7 +148,7 @@ const Navbar = () => {
                                           </DropdownMenuContent>
                                     </DropdownMenu>
                               ) : (
-                                    <Button asChild size="sm">
+                                    <Button asChild size="sm" className="hover-lift">
                                           <Link to="/auth">Sign In</Link>
                                     </Button>
                               )}
@@ -166,14 +172,14 @@ const Navbar = () => {
 
                   {/* Mobile menu */}
                   {mobileMenuOpen && (
-                        <div className="md:hidden px-4 pb-4 pt-2 border-t">
+                        <div className="md:hidden px-4 pb-4 pt-2 border-t animate-fade-in">
                               <div className="flex flex-col space-y-3">
                                     {navItems.map((item) => (
                                           <Link
                                                 key={item.name}
                                                 to={item.href}
                                                 className={cn(
-                                                      "px-3 py-2 text-base font-medium rounded-md",
+                                                      "px-3 py-2 text-base font-medium rounded-md transition-colors",
                                                       pathname === item.href
                                                             ? "bg-primary/10 text-primary"
                                                             : "hover:bg-muted"
@@ -192,10 +198,11 @@ const Navbar = () => {
                                                       <Link
                                                             key={item.name}
                                                             to={item.href}
-                                                            className="px-3 py-2 text-base font-medium rounded-md hover:bg-muted"
+                                                            className="px-3 py-2 text-base font-medium rounded-md hover:bg-muted flex items-center"
                                                             onClick={() => setMobileMenuOpen(false)}
                                                       >
-                                                            {item.name}
+                                                            {item.icon}
+                                                            <span className="ml-2">{item.name}</span>
                                                       </Link>
                                                 ))}
                                                 
@@ -204,9 +211,10 @@ const Navbar = () => {
                                                             handleSignOut();
                                                             setMobileMenuOpen(false);
                                                       }}
-                                                      className="px-3 py-2 text-base font-medium rounded-md text-left hover:bg-muted"
+                                                      className="px-3 py-2 text-base font-medium rounded-md text-left hover:bg-muted flex items-center text-destructive"
                                                 >
-                                                      Log out
+                                                      <LogOut className="h-4 w-4 mr-2" />
+                                                      <span>Log out</span>
                                                 </button>
                                           </>
                                     )}
