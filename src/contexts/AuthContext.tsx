@@ -11,6 +11,7 @@ interface AuthContextType {
   signUp: (email: string, password: string, name: string) => Promise<void>;
   signOut: () => Promise<void>;
   loading: boolean;
+  isAdmin: boolean; // Added isAdmin property
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -19,6 +20,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<User | null>(null);
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false); // Added isAdmin state
   const { toast } = useToast();
 
   useEffect(() => {
@@ -30,6 +32,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           console.log("Auth state changed:", event, session?.user?.id);
           setSession(session);
           setUser(session?.user ?? null);
+          
+          // Check if user is admin when auth state changes
+          if (session?.user) {
+            // You can implement your admin check logic here.
+            // For example, checking a specific email or querying a user_roles table
+            // This is a simple example checking if email contains 'admin'
+            const isUserAdmin = session.user.email?.includes('admin') || false;
+            setIsAdmin(isUserAdmin);
+          } else {
+            setIsAdmin(false);
+          }
+          
           setLoading(false);
         }
       );
@@ -37,6 +51,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       const { data } = await supabase.auth.getSession();
       setSession(data.session);
       setUser(data.session?.user ?? null);
+      
+      // Check if user is admin on initial load
+      if (data.session?.user) {
+        const isUserAdmin = data.session.user.email?.includes('admin') || false;
+        setIsAdmin(isUserAdmin);
+      }
+      
       setLoading(false);
       
       return () => subscription.unsubscribe();
@@ -135,7 +156,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       signIn, 
       signUp, 
       signOut, 
-      loading
+      loading,
+      isAdmin
     }}>
       {children}
     </AuthContext.Provider>

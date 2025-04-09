@@ -1,4 +1,3 @@
-
 import React, { useState } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
@@ -16,7 +15,7 @@ import {
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
-import { useMobile } from "@/hooks/use-mobile";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const navItems = [
       { name: "Home", href: "/" },
@@ -30,7 +29,7 @@ const Navbar = () => {
       const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
       const { user, isAdmin } = useAuth();
       const { toast } = useToast();
-      const isMobile = useMobile();
+      const isMobile = useIsMobile();
 
       const handleSignOut = async () => {
             try {
