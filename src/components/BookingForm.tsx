@@ -1,7 +1,7 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { format } from "date-fns";
-import { Calendar as CalendarIcon, Car, Check, Mail, Phone, User } from "lucide-react";
+import { Calendar as CalendarIcon, Car, Check, Mail, Phone, User, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Calendar } from "@/components/ui/calendar";
@@ -23,6 +23,7 @@ import { Label } from "@/components/ui/label";
 import { useToast } from '@/hooks/use-toast';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 const services = [
   { id: "basic", name: "Basic Wash", duration: 60, price: "$49.99" },
@@ -52,11 +53,71 @@ const BookingForm: React.FC = () => {
   const [formState, setFormState] = useState(initialFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [bookedTimeSlots, setBookedTimeSlots] = useState<{[key: string]: string[]}>({});
   const { toast } = useToast();
   const { user } = useAuth();
 
+  useEffect(() => {
+    // Pre-fill form with user data if available
+    if (user) {
+      const fetchUserProfile = async () => {
+        try {
+          const { data, error } = await supabase
+            .from('profiles')
+            .select('full_name, email')
+            .eq('id', user.id)
+            .single();
+          
+          if (error) throw error;
+          
+          if (data) {
+            setFormState(prev => ({ 
+              ...prev, 
+              name: data.full_name || '',
+              email: data.email || user.email || '',
+            }));
+          }
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+        }
+      };
+      
+      fetchUserProfile();
+    }
+  }, [user]);
+
   const resetForm = () => {
     setFormState(initialFormState);
+    setBookedTimeSlots({});
+  };
+
+  const fetchBookedTimeSlots = async (date: Date) => {
+    try {
+      const formattedDate = format(date, 'yyyy-MM-dd');
+      
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('time_slot')
+        .eq('date', formattedDate);
+      
+      if (error) throw error;
+      
+      const slots = data.map(booking => booking.time_slot);
+      setBookedTimeSlots({...bookedTimeSlots, [formattedDate]: slots});
+      
+      return slots;
+    } catch (error: any) {
+      console.error('Error fetching booked time slots:', error);
+      return [];
+    }
+  };
+
+  const handleDateChange = async (date: Date | undefined) => {
+    if (date) {
+      await fetchBookedTimeSlots(date);
+    }
+    
+    setFormState(prev => ({ ...prev, date }));
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -84,6 +145,20 @@ const BookingForm: React.FC = () => {
     
     setIsSubmitting(true);
     
+    // Check if the time slot is already booked
+    const formattedDate = format(date, 'yyyy-MM-dd');
+    const bookedSlots = bookedTimeSlots[formattedDate] || await fetchBookedTimeSlots(date);
+    
+    if (bookedSlots.includes(timeSlot)) {
+      toast({
+        title: "Time slot unavailable",
+        description: "This time slot is already booked. Please select another time.",
+        variant: "destructive",
+      });
+      setIsSubmitting(false);
+      return;
+    }
+    
     const selectedService = services.find(s => s.id === service);
     
     try {
@@ -96,6 +171,7 @@ const BookingForm: React.FC = () => {
         price: selectedService?.price || "",
         car_make: carMake,
         car_model: carModel,
+        phone: phone,
         status: 'confirmed'
       });
       
@@ -143,9 +219,26 @@ const BookingForm: React.FC = () => {
           <p className="text-sm text-muted-foreground">
             A confirmation email has been sent to {formState.email}
           </p>
+          <div className="mt-6">
+            <Button 
+              variant="outline"
+              onClick={() => window.location.href = '/my-bookings'}
+            >
+              View My Bookings
+            </Button>
+          </div>
         </div>
       ) : (
         <form onSubmit={handleSubmit} className="space-y-8">
+          {!user && (
+            <Alert className="bg-amber-50 border-amber-200">
+              <AlertCircle className="h-4 w-4 text-amber-600" />
+              <AlertDescription className="text-amber-800">
+                You must be logged in to book a service. Please <a href="/auth" className="font-medium underline">sign in</a> or <a href="/auth?tab=register" className="font-medium underline">create an account</a>.
+              </AlertDescription>
+            </Alert>
+          )}
+          
           <div className="space-y-4">
             <h3 className="text-lg font-medium">Service Information</h3>
             
@@ -189,10 +282,9 @@ const BookingForm: React.FC = () => {
                     <Calendar
                       mode="single"
                       selected={formState.date}
-                      onSelect={(date) => setFormState(prev => ({ ...prev, date }))}
+                      onSelect={handleDateChange}
                       initialFocus
-                      disabled={(date) => date < new Date()}
-                      className={cn("p-3 pointer-events-auto")}
+                      disabled={(date) => date < new Date(new Date().setHours(0, 0, 0, 0))}
                     />
                   </PopoverContent>
                 </Popover>
@@ -209,11 +301,21 @@ const BookingForm: React.FC = () => {
                     <SelectValue placeholder="Select time" />
                   </SelectTrigger>
                   <SelectContent>
-                    {timeSlots.map((time) => (
-                      <SelectItem key={time} value={time}>
-                        {time}
-                      </SelectItem>
-                    ))}
+                    {timeSlots.map((time) => {
+                      const isBooked = formState.date && 
+                        bookedTimeSlots[format(formState.date, 'yyyy-MM-dd')] && 
+                        bookedTimeSlots[format(formState.date, 'yyyy-MM-dd')].includes(time);
+                      
+                      return (
+                        <SelectItem 
+                          key={time} 
+                          value={time}
+                          disabled={isBooked}
+                        >
+                          {time} {isBooked && '(Unavailable)'}
+                        </SelectItem>
+                      );
+                    })}
                   </SelectContent>
                 </Select>
               </div>
@@ -299,7 +401,7 @@ const BookingForm: React.FC = () => {
           <Button 
             type="submit" 
             className="w-full hover-lift"
-            disabled={isSubmitting}
+            disabled={isSubmitting || !user}
           >
             {isSubmitting ? "Processing..." : "Confirm Booking"}
           </Button>

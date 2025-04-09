@@ -9,6 +9,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import PageTransition from "@/components/transitions/PageTransition";
 import DataAnalytics from "@/components/admin/DataAnalytics";
+import ManageBookings from "@/components/admin/ManageBookings";
 import {
       Table,
       TableBody,
@@ -337,11 +338,18 @@ const AdminDashboard: React.FC = () => {
                               <Tabs defaultValue="analytics" className="w-full mb-6">
                                     <TabsList className="mb-4">
                                           <TabsTrigger value="analytics">Analytics</TabsTrigger>
+                                          <TabsTrigger value="bookings">Manage Bookings</TabsTrigger>
                                           <TabsTrigger value="data">Raw Data</TabsTrigger>
                                     </TabsList>
                                     
                                     <TabsContent value="analytics">
                                           <DataAnalytics bookings={bookings} feedback={feedback} />
+                                    </TabsContent>
+                                    
+                                    <TabsContent value="bookings">
+                                          <div className="bg-white rounded-lg shadow-md p-6">
+                                                <ManageBookings bookings={bookings} onRefresh={fetchBookings} />
+                                          </div>
                                     </TabsContent>
                                     
                                     <TabsContent value="data">

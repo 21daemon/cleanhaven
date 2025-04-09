@@ -4,9 +4,12 @@ import Navbar from '@/components/Navbar';
 import Footer from '@/components/Footer';
 import BookingForm from '@/components/BookingForm';
 import PageTransition from '@/components/transitions/PageTransition';
-import { CalendarCheck, Clock, CreditCard, MapPin, Phone } from 'lucide-react';
+import { CalendarCheck, Clock, CreditCard, MapPin, Phone, ArrowRight } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { useAuth } from '@/contexts/AuthContext';
 
 const Booking: React.FC = () => {
+  const { user } = useAuth();
   const businessHours = [
     { day: "Monday", hours: "9:00 AM - 6:00 PM" },
     { day: "Tuesday", hours: "9:00 AM - 6:00 PM" },
@@ -54,6 +57,14 @@ const Booking: React.FC = () => {
                 Select your preferred service, date, and time, and let us handle the rest.
                 Your vehicle deserves the best care available.
               </p>
+              
+              {user && (
+                <div className="mt-6 animate-slide-up animation-delay-200">
+                  <Button variant="outline" onClick={() => window.location.href = '/my-bookings'} className="flex items-center gap-2">
+                    View My Bookings <ArrowRight className="h-4 w-4" />
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
         </section>

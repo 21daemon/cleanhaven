@@ -11,6 +11,7 @@ import { ThemeProvider } from "next-themes";
 import Index from "./pages/Index";
 import Services from "./pages/Services";
 import Booking from "./pages/Booking";
+import MyBookings from "./pages/MyBookings";
 import Feedback from "./pages/Feedback";
 import Auth from "./pages/Auth";
 import AdminDashboard from "./pages/AdminDashboard";
@@ -42,6 +43,10 @@ const App = () => (
                                                       <Route
                                                             path="/booking"
                                                             element={<Booking />}
+                                                      />
+                                                      <Route
+                                                            path="/my-bookings"
+                                                            element={<MyBookings />}
                                                       />
                                                       <Route
                                                             path="/feedback"
