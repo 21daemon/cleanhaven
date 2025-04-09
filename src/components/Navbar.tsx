@@ -1,10 +1,10 @@
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Link, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { ModeToggle } from "@/components/ModeToggle";
-import { Menu, X, User, LogOut, Settings, LayoutDashboard } from "lucide-react";
+import { Menu, X, User, LogOut, LayoutDashboard } from "lucide-react";
 import {
       DropdownMenu,
       DropdownMenuContent,
@@ -14,7 +14,6 @@ import {
       DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
-import { supabase } from "@/integrations/supabase/client";
 import { useToast } from "@/hooks/use-toast";
 import { useIsMobile } from "@/hooks/use-mobile";
 
@@ -31,6 +30,18 @@ const Navbar = () => {
       const { user, isAdmin, signOut } = useAuth();
       const { toast } = useToast();
       const isMobile = useIsMobile();
+      const [adminVisible, setAdminVisible] = useState(false);
+
+      useEffect(() => {
+            // This will help debug the admin status
+            if (user) {
+                  console.log("User is logged in. Admin status:", isAdmin);
+                  setAdminVisible(isAdmin);
+            } else {
+                  console.log("No user is logged in");
+                  setAdminVisible(false);
+            }
+      }, [user, isAdmin]);
 
       const handleSignOut = async () => {
             try {
@@ -47,11 +58,13 @@ const Navbar = () => {
             }
       };
 
+      // Define user navigation items
       const userNavItems = [
             { name: "My Bookings", href: "/my-bookings", icon: <User className="mr-2 h-4 w-4" /> },
       ];
 
-      if (isAdmin) {
+      // Add admin dashboard link if user is admin
+      if (adminVisible) {
             userNavItems.push({ 
                   name: "Admin Dashboard", 
                   href: "/admin", 
@@ -93,6 +106,25 @@ const Navbar = () => {
                                                 {item.name}
                                           </Link>
                                     ))}
+                                    
+                                    {/* Show Admin link in desktop menu if user is admin */}
+                                    {adminVisible && (
+                                          <Link
+                                                to="/admin"
+                                                className={cn(
+                                                      "text-sm font-medium transition-colors relative after:absolute after:bottom-0 after:left-0 after:w-full after:h-0.5 after:rounded-full after:origin-left after:transform after:scale-x-0 hover:after:scale-x-100 after:transition-transform",
+                                                      pathname === "/admin"
+                                                            ? "text-primary after:bg-primary after:scale-x-100"
+                                                            : "text-muted-foreground hover:text-foreground after:bg-primary/60",
+                                                      "flex items-center"
+                                                )}
+                                          >
+                                                <span className="relative">
+                                                      Admin
+                                                      <span className="absolute -top-1 -right-3 h-2 w-2 rounded-full bg-primary"></span>
+                                                </span>
+                                          </Link>
+                                    )}
                               </div>
                         </div>
 
@@ -109,7 +141,7 @@ const Navbar = () => {
                                                       <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center">
                                                             <User className="h-4 w-4 text-primary" />
                                                       </div>
-                                                      {isAdmin && (
+                                                      {adminVisible && (
                                                           <span className="absolute top-0 right-0 h-3 w-3 rounded-full bg-primary"></span>
                                                       )}
                                                 </Button>
@@ -119,7 +151,7 @@ const Navbar = () => {
                                                 className="w-56"
                                           >
                                                 <DropdownMenuLabel>
-                                                      My Account {isAdmin && <span className="ml-2 text-xs font-normal text-primary">(Admin)</span>}
+                                                      My Account {adminVisible && <span className="ml-2 text-xs font-normal text-primary">(Admin)</span>}
                                                 </DropdownMenuLabel>
                                                 <DropdownMenuSeparator />
                                                 
@@ -192,19 +224,34 @@ const Navbar = () => {
                                           </Link>
                                     ))}
                                     
+                                    {/* Show Admin link in mobile menu if user is admin */}
+                                    {adminVisible && (
+                                          <Link
+                                                to="/admin"
+                                                className={cn(
+                                                      "px-3 py-2 text-base font-medium rounded-md transition-colors flex items-center",
+                                                      pathname === "/admin"
+                                                            ? "bg-primary/10 text-primary"
+                                                            : "hover:bg-muted"
+                                                )}
+                                                onClick={() => setMobileMenuOpen(false)}
+                                          >
+                                                <LayoutDashboard className="h-4 w-4 mr-2" />
+                                                <span>Admin Dashboard</span>
+                                                <span className="ml-2 h-2 w-2 rounded-full bg-primary"></span>
+                                          </Link>
+                                    )}
+                                    
                                     {user && (
                                           <>
-                                                {userNavItems.map((item) => (
-                                                      <Link
-                                                            key={item.name}
-                                                            to={item.href}
-                                                            className="px-3 py-2 text-base font-medium rounded-md hover:bg-muted flex items-center"
-                                                            onClick={() => setMobileMenuOpen(false)}
-                                                      >
-                                                            {item.icon}
-                                                            <span className="ml-2">{item.name}</span>
-                                                      </Link>
-                                                ))}
+                                                <Link
+                                                      to="/my-bookings"
+                                                      className="px-3 py-2 text-base font-medium rounded-md hover:bg-muted flex items-center"
+                                                      onClick={() => setMobileMenuOpen(false)}
+                                                >
+                                                      <User className="h-4 w-4 mr-2" />
+                                                      <span>My Bookings</span>
+                                                </Link>
                                                 
                                                 <button
                                                       onClick={() => {
